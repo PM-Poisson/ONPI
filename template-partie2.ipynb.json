@@ -1,0 +1,249 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# math librairies\n",
+    "import numpy as np\n",
+    "from scipy import ndimage\n",
+    "\n",
+    "from plotly import express as px\n",
+    "import pandas               # used with plotly\n",
+    "\n",
+    "# 2D image processing \n",
+    "import cv2\n",
+    "\n",
+    "# custom librairies\n",
+    "import imicpe\n",
+    "import imicpe.optim as optim\n",
+    "print(imicpe.__version__)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **Initialisation**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Chargement de la vérité terrain"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# génération d'une vérité terrain 1D xbar\n",
+    "N = 100\n",
+    "dom  = np.arange(1,N+1)\n",
+    "xbar = np.zeros((N,),float)\n",
+    "xbar[25:50] =  np.sin(.25*dom[25:50])\n",
+    "xbar[60:70] = -1.\n",
+    "xbar[75:90] =  1."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# # chargement d'une image \n",
+    "# xbar = cv2.imread('...',0)/255."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Création de la donnée dégradée"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# choix de l'opérateur d'acquisition\n",
+    "h = ...\n",
+    "def H(x):\n",
+    "    return optim.A(x,h)\n",
+    "def Ht(x):\n",
+    "    return optim.At(x,h)\n",
+    "\n",
+    "# création de la donnée z, dégradée par un bruit blanc gaussien d'écart-type sig\n",
+    "sig = ...\n",
+    "z = ..."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Fonction de coût"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# attache aux données\n",
+    "def f(x):\n",
+    "    return ...\n",
+    "\n",
+    "# régularisation\n",
+    "def R(x):\n",
+    "    return ...\n",
+    "\n",
+    "# fonction de coût globale\n",
+    "def E(x,lam):\n",
+    "    return ...\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **Algorithme**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# paramètres du modèle\n",
+    "\n",
+    "\n",
+    "# paramètres de l'algo\n",
+    "Niter = ...                                 # nombre max d'itérations\n",
+    "\n",
+    "# initialisation des variables\n",
+    "En = np.zeros((Niter,),float) * np.nan\n",
+    "xn = ...\t\t\t\t\t\t\t\t\t# x0\n",
+    "\n",
+    "# itérations\n",
+    "for i in range(1,Niter):\n",
+    "\txn = ...\n",
+    "    \n",
+    "\tEn[i] = E(xn,lam)\n",
+    "    \n",
+    "\n",
+    "xhat = xn\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## **Affichage des resultats**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# plot cost function\n",
+    "plt_cost = pandas.DataFrame({'x':np.arange(Niter), 'y':En, 'legend':'cost', 'type':'cost_function'})\n",
+    "\n",
+    "fig = px.line(plt_cost,\n",
+    "              x='x', \n",
+    "              y='y', \n",
+    "              log_x=True, log_y=True,\n",
+    "              labels={'x':'itérations (logscale)','y':'E(x^k) (logscale)'},\n",
+    "              title='Évolution de la fonction de coût en fonction des itérations',\n",
+    "              width=800, height=350)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# plot signals\n",
+    "plt_xbar = pandas.DataFrame({'x':dom, 'y':xbar, 'legend':'xbar'})\n",
+    "plt_z    = pandas.DataFrame({'x':dom, 'y':z,    'legend':'z'})\n",
+    "plt_xhat = pandas.DataFrame({'x':dom, 'y':xhat, 'legend':'xhat'})\n",
+    "\n",
+    "data  = pandas.concat([plt_xbar,plt_z,plt_xhat]) \n",
+    "\n",
+    "fig = px.line(data,\n",
+    "              x='x',\n",
+    "              y='y', \n",
+    "              color='legend',     color_discrete_sequence=['black','orange', 'orangered'],\n",
+    "              line_dash='legend', line_dash_sequence=['dot', 'solid', 'dash'],               \n",
+    "              labels={'x':'indices','y':''},\n",
+    "              title='Signaux', \n",
+    "              range_y=[1.1*np.amin([xbar,z,xhat]),1.1*np.amax([xbar,z,xhat])],\n",
+    "              width=800, height=450)\n",
+    "fig.show()\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# # plot images\n",
+    "# plt_img = np.array([xbar,z,xhat]) \n",
+    "# legend   = ['xbar', 'z', 'xhat']\n",
+    "\n",
+    "# nb_img_per_row = 3\n",
+    "\n",
+    "# fig = px.imshow(plt_img, color_continuous_scale='gray', range_color=[0,1], \n",
+    "#                   title='Résultats',\n",
+    "#                   facet_col=0, facet_col_spacing=0, facet_col_wrap=nb_img_per_row,\n",
+    "#                   width=700, height=400,\n",
+    "#                     )\n",
+    "# fig.update_layout(coloraxis_showscale=True)\n",
+    "# fig.update_xaxes(showticklabels=False)\n",
+    "# fig.update_yaxes(showticklabels=False)\n",
+    "\n",
+    "# item_map={f'{i}':key for i, key in enumerate(legend)}\n",
+    "# fig.for_each_annotation(lambda a: a.update(text=item_map[a.text.split(\"=\")[1]]))\n",
+    "\n",
+    "# fig.show()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "myenv",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

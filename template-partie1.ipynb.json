@@ -1,0 +1,181 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# math librairies\n",
+    "import numpy as np\n",
+    "from scipy import ndimage\n",
+    "\n",
+    "from plotly import express as px\n",
+    "import pandas               # used with plotly\n",
+    "\n",
+    "# 2D image processing \n",
+    "import cv2\n",
+    "\n",
+    "# custom librairies\n",
+    "import imicpe\n",
+    "import imicpe.optim as optim\n",
+    "print(imicpe.__version__)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **Initialisation**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Fonction de coût"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# fonction de coût\n",
+    "def E(x):\n",
+    "    return ...\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **Algorithme**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# paramètres de l'algo\n",
+    "Niter = ...                                 # nombre max d'itérations\n",
+    "\n",
+    "# initialisation des variables\n",
+    "En = np.zeros((Niter+1,),float) * np.nan\n",
+    "\n",
+    "N  = ...\t\t\t\t\t\t\t\t\t# taille de x\n",
+    "xn = np.zeros((Niter+1,N),float) * np.nan\n",
+    "xn[0] = ...\t\t\t\t\t\t\t\t\t# valeur initiale x0\n",
+    "\n",
+    "# itérations\n",
+    "for it in range(Niter):\n",
+    "\txn[it+1] = ...\n",
+    "    \n",
+    "\tEn[it+1] = E(xn[it+1])\n",
+    "    \n",
+    "\n",
+    "xhat = xn[-1]\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## **Affichage des résultats**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# fonction de coût\n",
+    "plt_cost = pandas.DataFrame({'x':np.arange(len(En)), 'y':En, 'legend':'cost'})\n",
+    "\n",
+    "fig = px.line(plt_cost,\n",
+    "              x='x', \n",
+    "              y='y', \n",
+    "              log_x=True, log_y=True,\n",
+    "              labels={'x':'itérations (logscale)','y':'E(x^k) (logscale)'},\n",
+    "              title='Évolution de la fonction de coût en fonction des itérations',\n",
+    "              width=800, height=350)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# résultat    \n",
+    "if N == 1:\n",
+    "    xn = xn.flatten()\n",
+    "    data = pandas.DataFrame({'x':xn, 'y':xn**2, 'iter':np.arange(Niter)})\n",
+    "    \n",
+    "    fig = px.scatter(data, x='x', y='y',  \n",
+    "                color='iter',       \n",
+    "                labels={'x':'xn[it]','y':'xn[it]**2'},\n",
+    "                # size='iter',\n",
+    "                )\n",
+    "    \n",
+    "    t = np.linspace(0,xn[0]+1,20)\n",
+    "    fig.add_traces(px.line(x=t, y=t**2, color_discrete_sequence=['black'] ).data)\n",
+    "\n",
+    "    fig.update_layout(coloraxis_colorbar=dict(\n",
+    "        title=dict(text=\"Numéro d'itération\"),\n",
+    "    ))\n",
+    "else: \n",
+    "    data = pandas.DataFrame({'x':np.arange(N), 'y':xn[0], 'iteration':'0'})\n",
+    "    for it in range(0,Niter,Niter//10):\n",
+    "        plt_xn = pandas.DataFrame({'x':np.arange(N), 'y':xn[it], 'iteration':str(it)})\n",
+    "        data   = pandas.concat([data,plt_xn]) \n",
+    "\n",
+    "    myscale = px.colors.sample_colorscale(\n",
+    "        colorscale=px.colors.sequential.Plasma,\n",
+    "        samplepoints=len(data['iteration'].unique()),\n",
+    "        low=0.0, high=1.0,\n",
+    "        colortype=\"rgb\",\n",
+    "    )\n",
+    "\n",
+    "    fig = px.line(data,\n",
+    "                x='x',\n",
+    "                y='y', \n",
+    "                color='iteration',    #color_discrete_sequence=['black','orange', 'orangered'],\n",
+    "                color_discrete_sequence=myscale,           \n",
+    "                labels={'x':'indices','y':''},\n",
+    "                # title='Signaux', \n",
+    "                markers=True,\n",
+    "                width=800, height=450)\n",
+    "\n",
+    "\n",
+    "fig.show()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "myenv",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
